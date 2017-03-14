@@ -19,11 +19,9 @@ except:
     # TeX is not available.
     # TODO: Branch was not tested yet.
     eprint("Cannot use TeX for labels. Simple text will be used.")
-    TIME_STR = "Time, m"
     TEMP_STR = "Temperature, C"
     CO2_STR = "CO2, ppm"
 else:
-    TIME_STR = r"Time, $m$"
     TEMP_STR = r"Temperature, $C^{\circ}$"
     CO2_STR = r"${CO}_2$, $({ppm)}$"
 
@@ -34,7 +32,7 @@ from six.moves.tkinter import Tk, BOTH
 from subprocess import Popen, PIPE
 from threading  import Thread, Event
 
-from time import time
+from time import time, localtime, strftime
 from numpy import concatenate, array, NaN, isnan
 
 from collections import OrderedDict
@@ -50,14 +48,12 @@ CO2MOND = "co2mond"
 LOG_NAME = "co2graph.log"
 LOG_INDEX_INTERVAL = 60 * 60 # in seconds
 REFRESH_PERIOD = 3 # in seconds
-INTERPOLATION_PERIOD = float(REFRESH_PERIOD) * 2.0 / 60.0 # in minutes
+INTERPOLATION_PERIOD = float(REFRESH_PERIOD) * 2.0 # in seconds
 POLL_PERIOD = REFRESH_PERIOD * (1000 + 1) # in milliseconds
 GRAPH_Y_DELTA_FACTOR = .1
 EPS = .000000001
 
 if __name__ == "__main__":
-    t_start = time()
-
     # build log index
     # TODO: use binary tree
     log_index = OrderedDict()
@@ -112,6 +108,7 @@ if __name__ == "__main__":
     # GUI
     root = Tk()
     root.title("CO2 monitor graph")
+    root.geometry("800x400")
 
     # Graph
     # See https://pythonprogramming.net/how-to-embed-matplotlib-graph-tkinter-gui/
@@ -127,12 +124,9 @@ if __name__ == "__main__":
     # Temperature graph
     tsp = f.add_subplot(2,1,2, sharex=co2sp)
     tsp.set_autoscaley_on(True)
-    tsp.set_xlabel(TIME_STR)
     tsp.set_ylabel(TEMP_STR)
 
     tp, = tsp.plot([], [])
-
-    f.tight_layout()
 
     fc = FigureCanvasTkAgg(f, root)
     canvas = fc.get_tk_widget()
@@ -140,8 +134,6 @@ if __name__ == "__main__":
 
     def update_plot(p, t, v=None):
         global period
-
-        t /= 60.0
 
         ydat = p.get_ydata()
         if v is None:
@@ -160,7 +152,7 @@ if __name__ == "__main__":
             extt.insert(0, t0 + EPS)
 
         while len(xdat) > 1:
-            diff = (extt[-1] - xdat[0]) * 60.0
+            diff = extt[-1] - xdat[0]
             if diff <= period:
                 break
             xdat = xdat[1:]
@@ -174,9 +166,6 @@ if __name__ == "__main__":
 
     # kind, time stamp (float), value 
     def commit(k, t, v):
-        global t_start
-        t -= t_start
-
         if k == b"t":
             update_plot(tp, t, v)
             update_plot(co2p, t)
@@ -197,14 +186,13 @@ if __name__ == "__main__":
     def update_period():
         global period
         global scale
-        global t_start
 
         width = get_ax_size(co2sp, f)[0]
         period = width * float(scale)
 
         t0 = time() - period - float(INTERPOLATION_PERIOD * 2)
 
-        tS = (t0 - t_start) / 60.0
+        tS = t0 - time()
 
         co2p.set_ydata([NaN])
         co2p.set_xdata([tS])
@@ -247,17 +235,58 @@ if __name__ == "__main__":
         # x-axis is shared
         xdat = co2p.get_xdata()
         t = xdat[-1]
-        mins = t - period / 60.0
+        mins = t - period
         co2sp.set_xlim([mins, t])
 
-    update_period()
-    update_limits()
-    fc.show()
+        # format time
+        xticks = co2sp.get_xticks()
+        xti = reversed(xticks)
+
+        new_ticks = []
+        prev = next(xti)
+
+        full_date_i = len(xticks) // 2 - 1
+
+        for i, t in enumerate(xti):
+            tmpt = int(t)
+            tmpp = int(prev)
+            cur_fmt = ""
+            for div, fmt in [
+                (60, "%Ss"),
+                (60, "%Mm"),
+                (24, "%Hh")
+            ]:
+                if (tmpt % div) != (tmpp % div):
+                    cur_fmt = fmt + cur_fmt
+                tmpt //= div
+                tmpp //= div
+
+            if i == full_date_i:
+                new_ticks.append(strftime(
+                    "%H:%M:%S\n%a %B'%d %Y",
+                    localtime(t)
+                ))
+
+            else:
+                if i == 0:
+                    new_ticks.append(strftime(cur_fmt, localtime(prev)))
+
+                new_ticks.append(strftime(cur_fmt, localtime(t)))
+
+            prev = t
+
+        new_ticks.reverse()
+        co2sp.set_xticklabels(new_ticks, visible = False)
+        tsp.set_xticklabels(new_ticks)
 
     def validate():
         f.tight_layout()
         update_period()
         update_limits()
+
+    fc.show()
+    validate()
+    fc.draw()
 
     def on_resize(event):
         validate()
