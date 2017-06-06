@@ -83,7 +83,7 @@ if __name__ == "__main__":
             return open(LOG_NAME, "ab")
 
         if not log_index:
-            return open(LOG_NAME, "wb")
+            return open(LOG_NAME, "wb+")
 
         t0 = int(t0)
         for t, off in log_index.items():
