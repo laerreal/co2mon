@@ -54,6 +54,9 @@ GRAPH_Y_DELTA_FACTOR = .1
 EPS = .000000001
 
 if __name__ == "__main__":
+    if len(sys.argv) == 2:
+        CO2MOND = sys.argv[1]
+
     # build log index
     # TODO: use binary tree
     log_index = OrderedDict()
