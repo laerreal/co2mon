@@ -223,6 +223,26 @@ if __name__ == "__main__":
                     break
         return func(arr)
 
+    def period_string(seconds):
+        S = seconds % 60
+        ret = "%2.0fs" % S
+        mins = seconds / 60
+        if mins < 1.0:
+            return ret
+        M = mins % 60.0
+        ret = ("%2.0fm, " % M) + ret
+        hours = mins / 60.0
+        if hours < 1.0:
+            return ret
+        H = hours % 24
+        ret = ("%2.0fh, " % H) + ret
+        days = hours / 24
+        if days < 1.0:
+            return ret
+        d = days
+        ret = ("%.0fd, " % d) + ret
+        return ret
+
     def update_limits():
         for p, ax in ((co2p, co2sp), (tp, tsp)):
             ydat = p.get_ydata()
@@ -268,10 +288,10 @@ if __name__ == "__main__":
                 tmpp //= div
 
             if i == full_date_i:
-                new_ticks.append(strftime(
-                    "%H:%M:%S\n%a %B'%d %Y",
-                    localtime(t)
-                ))
+                new_ticks.append(
+                    strftime("%H:%M:%S\n%a %B'%d %Y", localtime(t)) \
+                    + "\nPeriod: " + period_string(period)
+                )
 
             else:
                 if i == 0:
