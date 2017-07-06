@@ -241,8 +241,8 @@ if __name__ == "__main__":
         # x-axis is shared
         xdat = co2p.get_xdata()
         t = xdat[-1]
-        mins = t - period
-        co2sp.set_xlim([mins, t])
+        seconds = t - period
+        co2sp.set_xlim([seconds, t])
 
         # format time
         xticks = co2sp.get_xticks()
