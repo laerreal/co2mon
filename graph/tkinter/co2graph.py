@@ -88,8 +88,11 @@ if __name__ == "__main__":
         if not log_index:
             return open(LOG_NAME, "wb+")
 
+        # Lookup most recent interval
         t0 = int(t0)
-        for t, off in log_index.items():
+        intervals = iter(log_index.items())
+        prev_off = next(intervals)[1]
+        for t, off in intervals:
             if t > t0:
                 break
             prev_off = off
