@@ -42,6 +42,14 @@ try:
 except ImportError:
     from queue import Queue, Empty  # python 3.x
 
+import psutil
+# https://stackoverflow.com/questions/4789837/how-to-terminate-a-python-subprocess-launched-with-shell-true
+def kill_with_children(pid):
+    process = psutil.Process(pid)
+    for proc in process.children(recursive = True):
+        proc.kill()
+    process.kill()
+
 ON_POSIX = 'posix' in sys.builtin_module_names
 
 CO2MOND = "co2mond"
@@ -404,4 +412,5 @@ if __name__ == "__main__":
         t.join(float(REFRESH_PERIOD) * 4.0)
     except:
         pass
-    co2.kill()
+
+    kill_with_children(co2.pid)
