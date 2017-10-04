@@ -392,7 +392,7 @@ if __name__ == "__main__":
                 log_index[t] = off
 
     def poll_co2():
-        root.after(POLL_PERIOD, poll_co2)
+        a = root.after(POLL_PERIOD, poll_co2)
 
         while True:
             # read line without blocking
@@ -402,6 +402,11 @@ if __name__ == "__main__":
                 break
             else: # got line
                 commit_raw(line)
+
+        # close GUI when backend finished
+        if not (t.is_alive() and co2.returncode is None):
+            root.after_cancel(a)
+            root.quit()
 
     root.after(0, poll_co2)
     root.mainloop()
