@@ -52,7 +52,7 @@ def kill_with_children(pid):
 
 ON_POSIX = 'posix' in sys.builtin_module_names
 
-CO2MOND = "co2mond"
+CO2MOND = ["co2mond"]
 LOG_NAME = "co2graph.log"
 LOG_INDEX_INTERVAL = 60 * 60 # in seconds
 REFRESH_PERIOD = 3 # in seconds
@@ -62,8 +62,8 @@ GRAPH_Y_DELTA_FACTOR = .1
 EPS = .000000001
 
 if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        CO2MOND = sys.argv[1]
+    if len(sys.argv) > 1:
+        CO2MOND = sys.argv[1:]
 
     # build log index
     # TODO: use binary tree
@@ -343,7 +343,7 @@ if __name__ == "__main__":
 
     # Process
     # See http://stackoverflow.com/questions/375427/non-blocking-read-on-a-subprocess-pipe-in-python
-    co2 = Popen([CO2MOND], stdout=PIPE, bufsize=1, close_fds=ON_POSIX)
+    co2 = Popen(CO2MOND, stdout=PIPE, bufsize=1, close_fds=ON_POSIX)
     q = Queue()
     end = Event()
 
