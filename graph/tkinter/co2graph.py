@@ -229,6 +229,8 @@ if __name__ == "__main__":
                 if not isnan(i):
                     arr[0] = i
                     break
+            else:
+                raise ValueError("All items in arr are nan")
         return func(arr)
 
     def period_string(seconds):
